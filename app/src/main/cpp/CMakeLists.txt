@@ -44,8 +44,11 @@ add_library( # Sets the name of the library.
         zbar/qrcode/rs.c
         zbar/qrcode/util.c
 
-        native-lib.cpp
+        scan_image.c
         zbarjni.c
+        opencv_t.cpp
+        test.cpp
+        color_util.c
         )
 
 # Searches for a specified prebuilt library and stores the path as a
@@ -55,6 +58,9 @@ add_library( # Sets the name of the library.
 # completing its build.
 add_library(libiconv SHARED IMPORTED )
 set_target_properties(libiconv PROPERTIES IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/../jniLibs/${ANDROID_ABI}/libiconv.so)
+add_library(libopencv_java4 SHARED IMPORTED )
+set_target_properties(libopencv_java4 PROPERTIES IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/../jniLibs/${ANDROID_ABI}/libopencv_java4.so)
+
 find_library( # Sets the name of the path variable.
         log-lib
 
@@ -67,11 +73,13 @@ find_library( # Sets the name of the path variable.
 # build script, prebuilt third-party libraries, or system libraries.
 INCLUDE_DIRECTORIES(
         ${CMAKE_SOURCE_DIR}/../jniLibs/include
-        ${CMAKE_SOURCE_DIR}/../jniLibs/libiconv/include)
+        ${CMAKE_SOURCE_DIR}/../jniLibs/libiconv/include
+        ${CMAKE_SOURCE_DIR}/../jniLibs/opencv/include)
 
 target_link_libraries( # Specifies the target library.
         zbarjni
         libiconv
+        libopencv_java4
         # Links the target library to the log library
         # included in the NDK.
         ${log-lib})

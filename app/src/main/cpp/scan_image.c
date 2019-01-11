@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <zbar.h>
+#include <jni.h>
+#include "log.h"
+#include "color_util.h"
 
 //#if !defined(PNG_LIBPNG_VER) || \
 //    PNG_LIBPNG_VER < 10018 || \
@@ -13,8 +16,7 @@
  *       png_set_expand_gray_1_2_4_to_8() because the former function also
  *       expanded palette images.
  */
-# define png_set_expand_gray_1_2_4_to_8 png_set_gray_1_2_4_to_8
-#endif
+
 
 zbar_image_scanner_t *scanner = NULL;
 
@@ -23,7 +25,8 @@ zbar_image_scanner_t *scanner = NULL;
  * documentation for details
  */
 
-int scan_image(int width, int height, void *raw) {
+const char *scan_image(void *raw, int width, int height) {
+    LOGE("scan_image");
     /* create a reader */
     scanner = zbar_image_scanner_create();
 
@@ -49,13 +52,32 @@ int scan_image(int width, int height, void *raw) {
         /* do something useful with results */
         zbar_symbol_type_t typ = zbar_symbol_get_type(symbol);
         const char *data = zbar_symbol_get_data(symbol);
-        printf("decoded %s symbol \"%s\"\n",
-               zbar_get_symbol_name(typ), data);
+        LOGE("decoded %s symbol \"%s\"\n",
+             zbar_get_symbol_name(typ), data);
+        if (zbar_symbol_get_data_length(symbol) > 0) {
+            return data;
+        }
     }
 
     /* clean up */
     zbar_image_destroy(image);
     zbar_image_scanner_destroy(scanner);
 
-    return (0);
+    return 0;
+}
+
+
+JNIEXPORT jstring JNICALL
+Java_com_example_qbar_MainActivity_decode(JNIEnv *env, jobject instance, jintArray data_, jint width, jint height) {
+    jint *data = (*env)->GetIntArrayElements(env, data_, NULL);
+
+    char *gray_data = binarization(data, width, height);
+    const char *result = scan_image(gray_data, width, height);
+
+//    if (gray_data != 0) {//不需要释放，好像zbar会释放
+//        free(gray_data);
+//    }
+
+    (*env)->ReleaseIntArrayElements(env, data_, data, 0);
+    return (*env)->NewStringUTF(env, result);
 }
